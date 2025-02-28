@@ -12,7 +12,7 @@ struct MenuView: View {
             LinearGradient(gradient: Gradient(colors: [Color.black, Color.blue]),
                            startPoint: .top,
                            endPoint: .bottom)
-                .edgesIgnoringSafeArea(.all)
+            .edgesIgnoringSafeArea(.all)
             
             VStack(spacing: 30) {
                 Text("Galaxy Jumper")
@@ -20,7 +20,7 @@ struct MenuView: View {
                     .fontWeight(.bold)
                     .foregroundColor(.white)
                     .scaleEffect(animateTitle ? 1.1 : 0.9)
-                    .animation(Animation.easeInOut(duration: 1).repeatForever(autoreverses: true),
+                    .animation(.easeInOut(duration: 1).repeatForever(autoreverses: true),
                                value: animateTitle)
                     .onAppear { animateTitle = true }
                 
@@ -38,12 +38,12 @@ struct MenuView: View {
                         .frame(width: 100, height: 100)
                 }
                 
-                Button(action: {
+                Button {
                     SoundManager.shared.playSound("menu.mp3")
                     withAnimation {
                         currentScreen = .avatarCreation
                     }
-                }) {
+                } label: {
                     Text("Crear Personaje")
                         .padding()
                         .frame(maxWidth: .infinity)
@@ -53,7 +53,7 @@ struct MenuView: View {
                 }
                 .padding(.horizontal, 50)
                 
-                Button(action: {
+                Button {
                     if selectedImage == nil {
                         showAlert = true
                     } else {
@@ -61,7 +61,7 @@ struct MenuView: View {
                             currentScreen = .game
                         }
                     }
-                }) {
+                } label: {
                     Text("Jugar")
                         .padding()
                         .frame(maxWidth: .infinity)
@@ -71,11 +71,11 @@ struct MenuView: View {
                 }
                 .padding(.horizontal, 50)
                 
-                Button(action: {
+                Button {
                     withAnimation {
                         currentScreen = .highscore
                     }
-                }) {
+                } label: {
                     Text("Highscores")
                         .padding()
                         .frame(maxWidth: .infinity)
