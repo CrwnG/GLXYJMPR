@@ -12,7 +12,7 @@ struct AvatarCreationView: View {
             LinearGradient(gradient: Gradient(colors: [.black, .purple]),
                            startPoint: .topLeading,
                            endPoint: .bottomTrailing)
-                .edgesIgnoringSafeArea(.all)
+            .edgesIgnoringSafeArea(.all)
             
             VStack(spacing: 20) {
                 Text("Crear tu Personaje")
