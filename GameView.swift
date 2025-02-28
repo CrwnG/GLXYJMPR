@@ -1,5 +1,6 @@
 import SwiftUI
 import SpriteKit
+import Foundation
 
 struct GameView: View {
     var selectedImage: UIImage?
@@ -35,18 +36,6 @@ struct GameView: View {
                         }
                     ) {
                         Text("←")
-                            .font(.largeTitle)
-                            .padding()
-                            .background(Color.white.opacity(0.3))
-                            .foregroundColor(.white)
-                            .cornerRadius(8)
-                    }
-                    
-                    // Botón DETENER (tap normal)
-                    Button(action: {
-                        scene?.horizontalInput = 0
-                    }) {
-                        Text("⏹")
                             .font(.largeTitle)
                             .padding()
                             .background(Color.white.opacity(0.3))
@@ -101,10 +90,8 @@ struct GameView: View {
                 currentScore = newScore
             }
             newScene.onGameOver = {
-                HighscoreManager.shared.addScore(currentScore)
-                DispatchQueue.main.async {
-                    isGameOver = true
-                }
+                HighscoreManager.shared.addScore(self.currentScore)
+                self.isGameOver = true
             }
             scene = newScene
         }
