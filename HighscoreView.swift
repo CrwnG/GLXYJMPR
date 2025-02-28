@@ -16,15 +16,14 @@ struct HighscoreView: View {
                     .font(.largeTitle)
                     .foregroundColor(.white)
                 
-                List {
-                    ForEach(highscoreManager.highscores.indices, id: \.self) { index in
+                List(highscoreManager.highscores.indices, id: \.self) { index in
                         Text("\(index + 1). Score: \(highscoreManager.highscores[index])")
-                            .foregroundColor(.black)
+                            .foregroundColor(.white)
                     }
                 }
                 .listStyle(PlainListStyle())
                 
-                Button("Volver al Menú") {
+                Button("Volver al menú") {
                     withAnimation {
                         currentScreen = .menu
                     }
@@ -37,4 +36,3 @@ struct HighscoreView: View {
             .padding()
         }
     }
-}
