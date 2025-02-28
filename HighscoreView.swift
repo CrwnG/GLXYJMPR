@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct HighscoreView: View {
-    @ObservedObject var highscoreManager = HighscoreManager()
+    @ObservedObject var highscoreManager = HighscoreManager.shared
     @Binding var currentScreen: ScreenState
     
     var body: some View {
@@ -9,7 +9,7 @@ struct HighscoreView: View {
             LinearGradient(gradient: Gradient(colors: [.purple, .black]),
                            startPoint: .top,
                            endPoint: .bottom)
-                .edgesIgnoringSafeArea(.all)
+            .edgesIgnoringSafeArea(.all)
             
             VStack(spacing: 20) {
                 Text("Highscores")
@@ -17,8 +17,8 @@ struct HighscoreView: View {
                     .foregroundColor(.white)
                 
                 List {
-                    ForEach(highscoreManager.highscores, id: \.self) { score in
-                        Text("Score: \(score)")
+                    ForEach(highscoreManager.highscores.indices, id: \.self) { index in
+                        Text("\(index + 1). Score: \(highscoreManager.highscores[index])")
                             .foregroundColor(.black)
                     }
                 }
