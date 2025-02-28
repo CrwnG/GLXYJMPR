@@ -3,36 +3,118 @@ import SpriteKit
 
 struct GameView: View {
     var selectedImage: UIImage?
+    @Binding var currentScreen: ScreenState
     
-    @State private var jumpSliderValue: Double = 0.0
-    @State private var gameScene: GameScene? = nil
+    @State private var scene: GameScene? = nil
+    @State private var isGameOver = false
+    @State private var currentScore = 0
     
     var body: some View {
         ZStack {
-            SpriteView(scene: gameScene ?? makeGameScene())
+            SpriteView(scene: scene ?? makeGameScene())
                 .ignoresSafeArea()
             
             VStack {
+                Text("Score: \(currentScore)")
+                    .font(.title)
+                    .foregroundColor(.white)
+                    .padding(.top, 40)
                 Spacer()
-                Slider(value: $jumpSliderValue, in: 0...1, step: 0.01)
-                    .padding()
-                    .onChange(of: jumpSliderValue) { newValue in
-                        if newValue >= 0.99 {
-                            gameScene?.jump()
-                            jumpSliderValue = 0.0
+            }
+            
+            VStack {
+                Spacer()
+                HStack(spacing: 30) {
+                    // Botón IZQUIERDA (presionable)
+                    PressableButton(
+                        onPressDown: {
+                            scene?.horizontalInput = -1
+                        },
+                        onPressUp: {
+                            scene?.horizontalInput = 0
                         }
+                    ) {
+                        Text("←")
+                            .font(.largeTitle)
+                            .padding()
+                            .background(Color.white.opacity(0.3))
+                            .foregroundColor(.white)
+                            .cornerRadius(8)
                     }
+                    
+                    // Botón DETENER (tap normal)
+                    Button(action: {
+                        scene?.horizontalInput = 0
+                    }) {
+                        Text("⏹")
+                            .font(.largeTitle)
+                            .padding()
+                            .background(Color.white.opacity(0.3))
+                            .foregroundColor(.white)
+                            .cornerRadius(8)
+                    }
+                    
+                    // Botón DERECHA (presionable)
+                    PressableButton(
+                        onPressDown: {
+                            scene?.horizontalInput = 1
+                        },
+                        onPressUp: {
+                            scene?.horizontalInput = 0
+                        }
+                    ) {
+                        Text("→")
+                            .font(.largeTitle)
+                            .padding()
+                            .background(Color.white.opacity(0.3))
+                            .foregroundColor(.white)
+                            .cornerRadius(8)
+                    }
+                }
+                .padding(.bottom, 40)
+            }
+            
+            if isGameOver {
+                Color.black.opacity(0.7)
+                    .edgesIgnoringSafeArea(.all)
+                VStack(spacing: 20) {
+                    Text("Game Over")
+                        .font(.largeTitle)
+                        .foregroundColor(.white)
+                    
+                    Text("Your Score: \(currentScore)")
+                        .foregroundColor(.white)
+                    
+                    Button("Menú") {
+                        currentScreen = .menu
+                    }
+                    .padding()
+                    .background(Color.blue)
+                    .foregroundColor(.white)
+                    .cornerRadius(8)
+                }
             }
         }
         .onAppear {
-            // Crear la escena al aparecer la vista
-            gameScene = GameScene(size: CGSize(width: 375, height: 667), chosenImage: selectedImage)
+            let newScene = makeGameScene()
+            newScene.onScoreUpdate = { newScore in
+                currentScore = newScore
+            }
+            newScene.onGameOver = {
+                HighscoreManager.shared.addScore(currentScore)
+                DispatchQueue.main.async {
+                    isGameOver = true
+                }
+            }
+            scene = newScene
         }
     }
     
-    func makeGameScene() -> SKScene {
-        let scene = GameScene(size: CGSize(width: 375, height: 667), chosenImage: selectedImage)
-        scene.scaleMode = .resizeFill
-        return scene
+    func makeGameScene() -> GameScene {
+        // Usar tamaño real de la pantalla
+        let screenSize = UIScreen.main.bounds.size
+        let newScene = GameScene(size: screenSize, chosenImage: selectedImage)
+        newScene.scaleMode = .resizeFill
+        return newScene
     }
 }
