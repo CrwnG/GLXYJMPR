@@ -1,5 +1,5 @@
 import SwiftUI
-import UIKit
+import SpriteKit
 
 //Navegación
 enum ScreenState {
@@ -12,7 +12,14 @@ enum ScreenState {
 //HighscoreManager
 class HighscoreManager: ObservableObject {
     static let shared = HighscoreManager()
-    @Published var highscores: [Int] = [120, 100, 80, 50]
+    @Published var highscores: [Int] = []
+    
+    private let key = "highscores"
+    
+    init(){
+        loadScores()
+        resetScores()
+    }
     
     func addScore(_ newScore: Int) {
         highscores.append(newScore)
@@ -20,6 +27,24 @@ class HighscoreManager: ObservableObject {
         if highscores.count > 10 {
             highscores.removeLast()
         }
+        saveScores()
+    }
+    
+    private func saveScores(){
+        UserDefaults.standard.set(highscores, forKey: key)
+    }
+    
+    private func loadScores(){
+        if let savedScores = UserDefaults.standard.array(forKey: key) as? [Int]{
+            highscores = savedScores
+        } else {
+            highscores = []
+        } 
+    }
+    
+    func resetScores(){
+        highscores = []
+        UserDefaults.standard.removeObject(forKey: key)
     }
 }
 
