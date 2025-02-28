@@ -1,7 +1,7 @@
 import SwiftUI
 import UIKit
 
-// MARK: - Navegación
+//Navegación
 enum ScreenState {
     case menu
     case avatarCreation
@@ -9,12 +9,21 @@ enum ScreenState {
     case highscore
 }
 
-// MARK: - HighscoreManager
+//HighscoreManager
 class HighscoreManager: ObservableObject {
+    static let shared = HighscoreManager()
     @Published var highscores: [Int] = [120, 100, 80, 50]
+    
+    func addScore(_ newScore: Int) {
+        highscores.append(newScore)
+        highscores.sort(by: >)
+        if highscores.count > 10 {
+            highscores.removeLast()
+        }
+    }
 }
 
-// MARK: - Recortar imagen en círculo
+//Función para recortar imagen en círculo
 func circularImage(from image: UIImage, size: CGSize) -> UIImage {
     let renderer = UIGraphicsImageRenderer(size: size)
     return renderer.image { _ in
@@ -24,7 +33,7 @@ func circularImage(from image: UIImage, size: CGSize) -> UIImage {
     }
 }
 
-// MARK: - ImagePicker para cámara/librería
+//ImagePicker
 struct ImagePicker: UIViewControllerRepresentable {
     @Environment(\.presentationMode) var presentationMode
     let sourceType: UIImagePickerController.SourceType
@@ -37,7 +46,7 @@ struct ImagePicker: UIViewControllerRepresentable {
         return picker
     }
     
-    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) { }
+    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
     
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
@@ -45,7 +54,10 @@ struct ImagePicker: UIViewControllerRepresentable {
     
     class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
         let parent: ImagePicker
-        init(_ parent: ImagePicker) { self.parent = parent }
+        
+        init(_ parent: ImagePicker) {
+            self.parent = parent
+        }
         
         func imagePickerController(_ picker: UIImagePickerController,
                                    didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
