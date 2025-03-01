@@ -48,7 +48,7 @@ class HighscoreManager: ObservableObject {
     }
 }
 
-//Función para recortar imagen en círculo
+//funcion para recortar imagen en círculo
 func circularImage(from image: UIImage, size: CGSize) -> UIImage {
     let renderer = UIGraphicsImageRenderer(size: size)
     return renderer.image { _ in
@@ -67,11 +67,19 @@ struct ImagePicker: UIViewControllerRepresentable {
     func makeUIViewController(context: Context) -> UIImagePickerController {
         let picker = UIImagePickerController()
         picker.sourceType = sourceType
+        
+        if sourceType == .camera {
+            // ConfigurA la cámara para que se muestre correctamente
+            picker.cameraCaptureMode = .photo
+            picker.cameraDevice = .rear  // Cambia a .front si prefieres la cámara frontal
+            picker.showsCameraControls = true
+        }
+        
         picker.delegate = context.coordinator
         return picker
     }
     
-    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
+    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) { }
     
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
