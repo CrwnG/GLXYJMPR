@@ -1,7 +1,6 @@
 import SwiftUI
 
 struct MenuView: View {
-    @Binding var currentScreen: ScreenState
     @Binding var selectedImage: UIImage?
     
     @State private var showAlert = false
@@ -32,18 +31,13 @@ struct MenuView: View {
                         .overlay(Circle().stroke(Color.white, lineWidth: 3))
                         .shadow(radius: 10)
                 } else {
-                    Image(systemName: "star.circle.fill")
+                    Image(systemName: "moon.stars.fill")
                         .resizable()
                         .foregroundColor(.white)
                         .frame(width: 100, height: 100)
                 }
                 
-                Button {
-                    SoundManager.shared.playSound("menu.mp3")
-                    withAnimation {
-                        currentScreen = .avatarCreation
-                    }
-                } label: {
+                NavigationLink(destination: AvatarCreationView(selectedImage: $selectedImage)) {
                     Text("Crear Personaje")
                         .padding()
                         .frame(maxWidth: .infinity)
@@ -53,44 +47,50 @@ struct MenuView: View {
                 }
                 .padding(.horizontal, 50)
                 
-                Button {
-                    if selectedImage == nil {
+                if selectedImage != nil {
+                    NavigationLink(destination: GameView(selectedImage: $selectedImage)) {
+                        Text("Jugar")
+                            .padding()
+                            .frame(maxWidth: .infinity)
+                            .background(Color.green.opacity(0.8))
+                            .foregroundColor(.white)
+                            .cornerRadius(10)
+                            .padding(.horizontal, 50)
+                    }
+                } else {
+                    Button(action: {
                         showAlert = true
-                    } else {
-                        withAnimation {
-                            currentScreen = .game
-                        }
+                    }) {
+                        Text("Jugar")
+                            .padding()
+                            .frame(maxWidth: .infinity)
+                            .background(Color.green.opacity(0.8))
+                            .foregroundColor(.white)
+                            .cornerRadius(10)
+                            .padding(.horizontal, 50)
                     }
-                } label: {
-                    Text("Jugar")
-                        .padding()
-                        .frame(maxWidth: .infinity)
-                        .background(Color.green.opacity(0.8))
-                        .foregroundColor(.white)
-                        .cornerRadius(10)
                 }
-                .padding(.horizontal, 50)
                 
-                Button {
-                    withAnimation {
-                        currentScreen = .highscore
-                    }
-                } label: {
+                // Botón Highscores
+                NavigationLink(destination: HighscoreView()) {
                     Text("Highscores")
                         .padding()
                         .frame(maxWidth: .infinity)
-                        .background(Color.orange.opacity(0.8))
+                        .background(Color.blue.opacity(0.8))
                         .foregroundColor(.white)
                         .cornerRadius(10)
                 }
                 .padding(.horizontal, 50)
             }
-            .padding()
-        }
-        .alert(isPresented: $showAlert) {
-            Alert(title: Text("Atención"),
-                  message: Text("No puedes jugar sin crear un personaje primero."),
-                  dismissButton: .default(Text("OK")))
+            
+            .alert(isPresented: $showAlert) {
+                Alert(
+                    title: Text("Atención"),
+                    message: Text("No puedes jugar sin crear primero tu personaje."),
+                    dismissButton: .default(Text("OK"))
+                )
+            }
         }
     }
 }
+
