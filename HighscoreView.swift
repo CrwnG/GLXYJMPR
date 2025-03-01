@@ -2,7 +2,6 @@ import SwiftUI
 
 struct HighscoreView: View {
     @ObservedObject var highscoreManager = HighscoreManager.shared
-    @Binding var currentScreen: ScreenState
     
     var body: some View {
         ZStack {
@@ -17,22 +16,24 @@ struct HighscoreView: View {
                     .foregroundColor(.white)
                 
                 List(highscoreManager.highscores.indices, id: \.self) { index in
-                        Text("\(index + 1). Score: \(highscoreManager.highscores[index])")
-                            .foregroundColor(.white)
-                    }
+                    Text("\(index + 1). Score: \(highscoreManager.highscores[index])")
+                        .foregroundColor(.primary) 
+                        .listRowBackground(Color.clear) 
                 }
                 .listStyle(PlainListStyle())
+                .background(Color.clear) 
+                .scrollContentBackground(.hidden) 
                 
-                Button("Volver al menú") {
-                    withAnimation {
-                        currentScreen = .menu
-                    }
+                NavigationLink(destination: MenuView(selectedImage: .constant(nil))) {
+                    Text("Volver al menú")
+                        .padding()
+                        .background(Color.blue.opacity(0.8))
+                        .foregroundColor(.white)
+                        .cornerRadius(8)
                 }
-                .padding()
-                .background(Color.blue.opacity(0.8))
-                .foregroundColor(.white)
-                .cornerRadius(8)
             }
             .padding()
         }
     }
+}
+
