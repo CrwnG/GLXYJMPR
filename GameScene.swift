@@ -8,30 +8,30 @@ struct PhysicsCategory {
 class GameScene: SKScene, SKPhysicsContactDelegate {
     var chosenImage: UIImage?
     
-    // Jugador
+    //Jugador
     var player: SKSpriteNode!
     
-    // Planetas circulares
+    //Planetas circulares
     var planets: [SKShapeNode] = []
     
-    // Movimiento horizontal
+    //Movimiento horizontal
     var horizontalInput: CGFloat = 0.0
     
-    // Cámara
+    //Cámara
     let cameraNode = SKCameraNode()
     
-    // Puntaje
+    //puntaje
     private(set) var score: Int = 0
     private var maxPlayerY: CGFloat = 0.0
     
-    // Game Over
+    //pame Over
     var isGameOver = false
     
-    // Callbacks
+    //callbacks
     var onGameOver: (() -> Void)?
     var onScoreUpdate: ((Int) -> Void)?
     
-    // Inicializador
+    //inicializador con imagen de AI
     convenience init(size: CGSize, chosenImage: UIImage?) {
         self.init(size: size)
         self.chosenImage = chosenImage
@@ -43,7 +43,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         physicsWorld.gravity = CGVector(dx: 0, dy: -9.8)
         physicsWorld.contactDelegate = self
         
-        // Ajuste: Fijar la cámara en el centro horizontal desde el principio
+        //Fijar la cámara en centro horizontal desde principio
         cameraNode.position = CGPoint(x: size.width / 2, y: size.height / 2)
         addChild(cameraNode)
         camera = cameraNode
@@ -54,10 +54,10 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         let initialY = player.position.y - 40
         spawnPlanet(at: CGPoint(x: size.width / 2, y: initialY))
         
-        // Planetas iniciales
+        // Planetas iniciales adicionales
         spawnInitialPlanets(fromY: initialY)
         
-        // Impulso inicial
+        // Impulso hacia arriba
         player.physicsBody?.applyImpulse(CGVector(dx: 0, dy: 300))
     }
     
@@ -65,9 +65,11 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         let diameter: CGFloat = 60
         let headTexture: SKTexture
         if let img = chosenImage {
+            //circular foto AI
             let circImg = circularImage(from: img, size: CGSize(width: diameter, height: diameter))
             headTexture = SKTexture(image: circImg)
         } else {
+            //si no hay imagen, usar un círculo gris por defecto
             let shape = SKShapeNode(circleOfRadius: diameter / 2)
             shape.fillColor = .gray
             let tempView = SKView()
@@ -76,21 +78,19 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         
         player = SKSpriteNode(texture: headTexture)
         player.size = CGSize(width: diameter, height: diameter)
-        // Centrar horizontalmente
+        //posicionar jugador en centro horizontal y a mitad de pantalla verticalmente
         player.position = CGPoint(x: size.width / 2, y: size.height / 2)
         
+        //configurar cuerpo físico del jugador
         let body = SKPhysicsBody(circleOfRadius: diameter / 2)
         body.categoryBitMask = PhysicsCategory.player
         body.contactTestBitMask = PhysicsCategory.platform
         body.collisionBitMask = PhysicsCategory.platform
-        
-        // Quitar fricción
         body.friction = 0.0
         body.linearDamping = 0.0
         body.angularDamping = 0.0
-        
         body.allowsRotation = false
-        body.restitution = 0.0
+        body.restitution = 0.0  //sin rebote automático, controlado manualmente
         
         player.physicsBody = body
         addChild(player)
@@ -110,7 +110,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     func spawnPlanet(at position: CGPoint) {
         let radius = dynamicPlanetRadius()
         let planet = SKShapeNode(circleOfRadius: radius)
-        planet.fillColor = .green
+        planet.fillColor = .cyan
         planet.strokeColor = .white
         planet.lineWidth = 2
         planet.position = position
@@ -123,12 +123,11 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         body.friction = 0.0
         
         planet.physicsBody = body
-        
         addChild(planet)
         planets.append(planet)
     }
     
-    // Planetas más pequeños con la altura
+    //ajustar radio de planetas de la altura alcanzada
     func dynamicPlanetRadius() -> CGFloat {
         let baseRadius: CGFloat = 50
         let reduction = maxPlayerY / 2000
@@ -136,15 +135,15 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         return max(20, newRadius)
     }
     
-    // Rebote
+    //físicas
     func didBegin(_ contact: SKPhysicsContact) {
         if isGameOver { return }
         let mask = contact.bodyA.categoryBitMask | contact.bodyB.categoryBitMask
         if mask == (PhysicsCategory.player | PhysicsCategory.platform) {
+            //rebote solo si el jugador está cayendo sobre un planeta
             if let velocity = player.physicsBody?.velocity, velocity.dy < 0 {
                 let bounceVelocity = 600 * (1 + maxPlayerY / 1000)
                 player.physicsBody?.velocity.dy = bounceVelocity
-                SoundManager.shared.playSound("jump.wav")
             }
         }
     }
@@ -152,17 +151,17 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     override func update(_ currentTime: TimeInterval) {
         if isGameOver { return }
         
-        // Movimiento horizontal
+        //movimiento horizontal del jugador 
         player.physicsBody?.velocity.dx = horizontalInput * 400
         
-        // Solo seguimos vertical
+        //seguir al jugador solo en vertical
         let deltaY = player.position.y - cameraNode.position.y
         cameraNode.position.y += deltaY * 0.1
         
-        // Mantener la cámara centrada horizontalmente
+        //mantener cámara centrada horizontalmente
         cameraNode.position.x = size.width / 2
         
-        // Actualizar altura y puntaje
+        //actualizar altura máxima y puntaje
         if player.position.y > maxPlayerY {
             maxPlayerY = player.position.y
             let newScore = Int(maxPlayerY)
@@ -172,17 +171,17 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             }
         }
         
-        // Generar más planetas
+        //más planetas conforme el jugador sube
         if let last = planets.last {
             if player.position.y > (last.position.y - 300) {
-                let spacing = CGFloat.random(in: 120*(1 + maxPlayerY/1000)...150*(1 + maxPlayerY/1000))
+                let spacing = CGFloat.random(in: 120 * (1 + maxPlayerY/1000)...150 * (1 + maxPlayerY/1000))
                 let newY = last.position.y + spacing
                 let newX = CGFloat.random(in: 80...(size.width - 80))
                 spawnPlanet(at: CGPoint(x: newX, y: newY))
             }
         }
         
-        // Game Over si cae
+        //Game Over si el jugador cae fuera de la pantalla
         let cameraBottom = cameraNode.position.y - (size.height / 2)
         if player.position.y < cameraBottom - 100 {
             triggerGameOver()
@@ -193,13 +192,14 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         if isGameOver { return }
         isGameOver = true
         
+        //mostrar texto de Game Over en la escena
         let label = SKLabelNode(text: "Game Over")
         label.fontColor = .white
         label.fontSize = 40
         label.position = CGPoint(x: cameraNode.position.x, y: cameraNode.position.y)
         addChild(label)
         
-        physicsWorld.speed = 0
-        onGameOver?()
+        physicsWorld.speed = 0  //detener física del juego
+        onGameOver?()           //llamar al callback de Game Over
     }
 }
