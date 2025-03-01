@@ -1,91 +1,108 @@
 import SwiftUI
 import AVFoundation
 import Photos
+import PhotosUI
+import ImagePlayground
+
+//definir ImagePickerType
+enum ImagePickerType: Identifiable {
+    case camera
+    case library
+    
+    var id: Int {
+        switch self {
+        case .camera: return 1
+        case .library: return 2
+        }
+    }
+}
 
 struct AvatarCreationView: View {
     @Binding var selectedImage: UIImage?
-    @Binding var currentScreen: ScreenState
     
-    @State private var showingImagePicker = false
-    @State private var sourceType: UIImagePickerController.SourceType?
+    @Environment(\.supportsImagePlayground) var supportsImagePlayground
+    @State private var isShowingImagePlayground = false
+    @State private var imageGenerationConcept = ""
+    
+    @State private var pickerType: ImagePickerType? = nil
     
     var body: some View {
-        ZStack {
-            LinearGradient(gradient: Gradient(colors: [.black, .purple]),
-                           startPoint: .topLeading,
-                           endPoint: .bottomTrailing)
-            .edgesIgnoringSafeArea(.all)
-            
-            VStack(spacing: 20) {
-                Text("Crear tu Personaje")
-                    .font(.title)
-                    .foregroundColor(.white)
+        NavigationView {
+            ZStack {
+                LinearGradient(
+                    gradient: Gradient(colors: [.black, .purple]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .edgesIgnoringSafeArea(.all)
                 
-                if let image = selectedImage {
-                    Image(uiImage: circularImage(from: image, size: CGSize(width: 150, height: 150)))
-                        .resizable()
-                        .clipShape(Circle())
-                        .frame(width: 150, height: 150)
-                        .overlay(Circle().stroke(Color.white, lineWidth: 2))
-                } else {
-                    Image(systemName: "person.crop.circle.badge.plus")
-                        .resizable()
+                VStack(spacing: 20) {
+                    Text("Crear tu Personaje")
+                        .font(.title)
                         .foregroundColor(.white)
-                        .frame(width: 150, height: 150)
-                }
-                
-                HStack(spacing: 20) {
+                    
+                    if let image = selectedImage {
+                        Image(uiImage: image)
+                            .resizable()
+                            .clipShape(Circle())
+                            .frame(width: 150, height: 150)
+                            .overlay(Circle().stroke(Color.white, lineWidth: 2))
+                    } else {
+                        Image(systemName: "person.crop.circle.badge.plus")
+                            .resizable()
+                            .foregroundColor(.white)
+                            .frame(width: 150, height: 150)
+                    }
+                    
+                    if supportsImagePlayground {
+                        Button("Generar Avatar con AI") {
+                            isShowingImagePlayground = true
+                        }
+                        .padding()
+                        .background(RoundedRectangle(cornerRadius: 16).stroke(Color.white, lineWidth: 2))
+                        .foregroundColor(.white)
+                    }
+                    
                     Button("Tomar foto") {
                         requestCameraPermission {
-                            DispatchQueue.main.async {
-                                sourceType = .camera
-                                showingImagePicker = true
-                            }
+                            pickerType = ImagePickerType.camera
                         }
                     }
-                    .disabled(!UIImagePickerController.isSourceTypeAvailable(.camera))
+                    .buttonStyle(DefaultButtonStyle())
                     
                     Button("Elegir de galería") {
                         requestGalleryPermission {
-                            DispatchQueue.main.async {
-                                sourceType = .photoLibrary
-                                showingImagePicker = true
-                            }
+                            pickerType = ImagePickerType.library
                         }
                     }
-                }
-                .foregroundColor(.white)
-                
-                Button("Guardar y Volver al Menú") {
-                    withAnimation {
-                        currentScreen = .menu
+                    .buttonStyle(DefaultButtonStyle())
+                    
+                    NavigationLink(destination: MenuView(selectedImage: $selectedImage)) {
+                        Text("Guardar y Volver al Menú")
+                            .padding()
+                            .background(Color.green.opacity(0.8))
+                            .foregroundColor(.white)
+                            .cornerRadius(8)
                     }
                 }
                 .padding()
-                .background(Color.green.opacity(0.8))
-                .foregroundColor(.white)
-                .cornerRadius(8)
             }
-            .padding()
-        }
-        .sheet(isPresented: Binding(
-            get: { showingImagePicker && sourceType != nil },
-            set: { newValue in
-                if !newValue {
-                    showingImagePicker = false
-                    sourceType = nil
-                }
-            }
-        )) {
-            if let source = sourceType {
+            .sheet(item: $pickerType) { (type: ImagePickerType) in
+                let source: UIImagePickerController.SourceType = (type == .camera) ? .camera : .photoLibrary
                 ImagePicker(sourceType: source) { image in
                     selectedImage = image
                 }
             }
+            .imagePlaygroundSheet(isPresented: $isShowingImagePlayground, concept: imageGenerationConcept, sourceImage: selectedImage.map { Image(uiImage: $0) }) { url in
+                if let data = try? Data(contentsOf: url), let image = UIImage(data: data) {
+                    selectedImage = image
+                }
+            }
         }
+        .navigationViewStyle(StackNavigationViewStyle())
     }
     
-    ///solicta permiso para la cámara
+    // funciones de permisos
     private func requestCameraPermission(completion: @escaping () -> Void) {
         let status = AVCaptureDevice.authorizationStatus(for: .video)
         switch status {
@@ -101,14 +118,11 @@ struct AvatarCreationView: View {
                     }
                 }
             }
-        case .denied, .restricted:
-            showPermissionAlert(for: "cámara")
-        @unknown default:
+        default:
             showPermissionAlert(for: "cámara")
         }
     }
     
-    /// permiso para la galería
     private func requestGalleryPermission(completion: @escaping () -> Void) {
         let status = PHPhotoLibrary.authorizationStatus()
         switch status {
@@ -124,24 +138,37 @@ struct AvatarCreationView: View {
                     }
                 }
             }
-        case .denied, .restricted:
-            showPermissionAlert(for: "galería")
-        @unknown default:
+        default:
             showPermissionAlert(for: "galería")
         }
     }
-    
-    ///muestra una alerta si los permisos son denegados
     private func showPermissionAlert(for feature: String) {
-        let alert = UIAlertController(
-            title: "Permiso de \(feature) requerido",
-            message: "Para usar la \(feature), habilita el acceso en Ajustes.",
-            preferredStyle: .alert
-        )
-        alert.addAction(UIAlertAction(title: "OK", style: .default))
-        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-           let rootVC = windowScene.windows.first?.rootViewController {
-            rootVC.present(alert, animated: true)
+        DispatchQueue.main.async {
+            let alert = UIAlertController(
+                title: "Permiso de \(feature) requerido",
+                message: "Para usar la \(feature), habilita el acceso en Ajustes.",
+                preferredStyle: .alert
+            )
+            alert.addAction(UIAlertAction(title: "OK", style: .default))
+            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+               let rootVC = windowScene.windows.first?.rootViewController {
+                rootVC.present(alert, animated: true)
+            }
+        }
+    }
+    
+    private func showUnavailableAlert(for feature: String) {
+        DispatchQueue.main.async {
+            let alert = UIAlertController(
+                title: "\(feature.capitalized) no disponible",
+                message: "Este dispositivo no soporta \(feature).",
+                preferredStyle: .alert
+            )
+            alert.addAction(UIAlertAction(title: "OK", style: .default))
+            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+               let rootVC = windowScene.windows.first?.rootViewController {
+                rootVC.present(alert, animated: true)
+            }
         }
     }
 }
