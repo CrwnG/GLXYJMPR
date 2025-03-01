@@ -3,18 +3,20 @@ import SpriteKit
 import Foundation
 
 struct GameView: View {
-    var selectedImage: UIImage?
-    @Binding var currentScreen: ScreenState
-    
     @State private var scene: GameScene? = nil
     @State private var isGameOver = false
     @State private var currentScore = 0
+    @Binding var selectedImage: UIImage?
     
     var body: some View {
         ZStack {
-            SpriteView(scene: scene ?? makeGameScene())
-                .ignoresSafeArea()
+            //vista de SpriteKit con escena del juego
+            if let gameScene = scene {
+                SpriteView(scene: gameScene)
+                    .ignoresSafeArea()
+            }
             
+            //mostrar el puntaje actual 
             VStack {
                 Text("Score: \(currentScore)")
                     .font(.title)
@@ -23,10 +25,11 @@ struct GameView: View {
                 Spacer()
             }
             
+            //controles de movimiento izquierda/derecha 
             VStack {
                 Spacer()
                 HStack(spacing: 30) {
-                    // Botón IZQUIERDA (presionable)
+                    // Botón IZQUIERDA
                     PressableButton(
                         onPressDown: {
                             scene?.horizontalInput = -1
@@ -43,7 +46,7 @@ struct GameView: View {
                             .cornerRadius(8)
                     }
                     
-                    // Botón DERECHA (presionable)
+                    // Botón DERECHA
                     PressableButton(
                         onPressDown: {
                             scene?.horizontalInput = 1
@@ -63,6 +66,7 @@ struct GameView: View {
                 .padding(.bottom, 40)
             }
             
+            //Game Over
             if isGameOver {
                 Color.black.opacity(0.7)
                     .edgesIgnoringSafeArea(.all)
@@ -73,32 +77,24 @@ struct GameView: View {
                     
                     Text("Your Score: \(currentScore)")
                         .foregroundColor(.white)
-                    
-                    Button("Menú") {
-                        currentScreen = .menu
-                    }
-                    .padding()
-                    .background(Color.blue)
-                    .foregroundColor(.white)
-                    .cornerRadius(8)
                 }
             }
         }
         .onAppear {
-            let newScene = makeGameScene()
-            newScene.onScoreUpdate = { newScore in
-                currentScore = newScore
+            if scene == nil {
+                scene = makeGameScene()
+                scene?.onScoreUpdate = { newScore in
+                    currentScore = newScore
+                }
+                scene?.onGameOver = {
+                    HighscoreManager.shared.addScore(self.currentScore)
+                    self.isGameOver = true
+                }
             }
-            newScene.onGameOver = {
-                HighscoreManager.shared.addScore(self.currentScore)
-                self.isGameOver = true
-            }
-            scene = newScene
         }
     }
     
     func makeGameScene() -> GameScene {
-        // Usar tamaño real de la pantalla
         let screenSize = UIScreen.main.bounds.size
         let newScene = GameScene(size: screenSize, chosenImage: selectedImage)
         newScene.scaleMode = .resizeFill
